@@ -24,4 +24,10 @@ if (test-path "${setupdrive}\local\main.ps1") {
 	. "${setupdrive}\local\main.ps1"
 }
 
+winget install -e --id Google.Chrome --disable-interactivity --accept-package-agreements
+winget install -e --id Microsoft.WinDbg --disable-interactivity --accept-package-agreements
+winget install -e --id 9njv5fq089z0 --disable-interactivity --accept-package-agreements 
+
+#msiexec /i "${setupdrive}\CloudbaseInitSetup_Stable_x64.msi" /qn
+
 cmd.exe /c "${setupdrive}\OEM\sysprep.bat" "${setupdrive}\OEM\unattend.xml"
