@@ -72,7 +72,7 @@ __EOF__
 printf '[+] Launching the VM\n'
 
 incus init "${name}" --empty --vm -c security.secureboot=false -c limits.cpu=4 -c limits.memory=8GB -c image.os=windows -d root,size=30GiB
-incus config device set "${name}" root io.bus=virtio-blk
+incus config device set "${name}" root io.bus=nvme
 incus config device add "${name}" iso disk source="${WINDIR}/${WINFILE}" boot.priority=10
 incus config device add "${name}" incusagent disk source="agent:config"
 apparmr | incus config set "${name}" raw.apparmor -
