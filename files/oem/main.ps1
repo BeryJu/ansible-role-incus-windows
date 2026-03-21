@@ -9,7 +9,18 @@ get-wmiobject win32_logicaldisk | % {
 	}
 }
 
-cmd.exe /c "${setupdrive}\OEM\compile-dotnet-assemblies.bat"
+Log ".net - Compile .net assemblies"
+$ngen32 = "$env:windir\microsoft.net\framework\v4.0.30319\ngen.exe"
+
+& $ngen32 update /force /queue | Out-Null
+& $ngen32 executequeueditems | Out-Null
+
+if ($env:PROCESSOR_ARCHITECTURE -eq "AMD64") {
+    $ngen64 = "$env:windir\microsoft.net\framework64\v4.0.30319\ngen.exe"
+
+    & $ngen64 update /force /queue | Out-Null
+    & $ngen64 executequeueditems | Out-Null
+}
 
 Log "Settings - Disable 'New network' window"
 reg.exe add "HKLM\System\CurrentControlSet\Control\Network\NewNetworkWindowOff"
