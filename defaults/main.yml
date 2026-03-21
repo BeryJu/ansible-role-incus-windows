@@ -22,4 +22,5 @@ incus_windows_console_timeout_seconds: 30
 incus_windows_stopped_grace_seconds: 10
 
 incus_windows_import_image: true
+incus_windows_export_image_artifacts: false
 incus_windows_import_alias: "{{ incus_windows_output_dir | basename }}"

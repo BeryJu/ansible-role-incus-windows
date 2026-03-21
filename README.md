@@ -6,7 +6,8 @@ An Ansible-based Incus Windows image builder.
 
 - Downloads and verifies Windows and virtio ISOs.
 - Rebuilds the unattended ISO with `Autounattend.xml`, `oem/`, and optional local payloads.
-- Builds a Windows VM image in Incus and exports `disk.qcow2` plus `incus.tar.xz`.
+- Builds a Windows VM image directly in Incus.
+- Optionally exports `disk.qcow2` plus `incus.tar.xz` when filesystem artifacts are requested.
 - Optionally imports the image into Incus and launches a VM from it.
 - Keeps the build flow declarative where Ansible has native modules, and uses direct commands only for `incus` and `xorriso`.
 
@@ -58,7 +59,17 @@ Build and import a Windows image:
 uv run ansible-playbook -i incus-host, build.yml -e incus_windows_target=2022
 ```
 
-This creates the build artifacts on the remote Incus host under `incus_windows_output_root`:
+By default this publishes the image directly into Incus and does not run `incus image export`, which avoids creating a large temporary image tarball on disk.
+
+If you also want filesystem artifacts on the remote Incus host, enable export explicitly:
+
+```sh
+uv run ansible-playbook -i incus-host, build.yml \
+  -e incus_windows_target=2022 \
+  -e incus_windows_export_image_artifacts=true
+```
+
+That creates the build artifacts under `incus_windows_output_root`:
 
 - `disk.qcow2`
 - `incus.tar.xz`
@@ -120,6 +131,7 @@ Useful variables:
 - `incus_windows_alt_autounattend`
 - `incus_windows_local_dir`
 - `incus_windows_import_image`
+- `incus_windows_export_image_artifacts`
 - `incus_windows_import_alias`
 - `incus_windows_iso_dir`
 - `incus_windows_output_dir`

@@ -4,6 +4,7 @@
     state: directory
     prefix: "image-export-{{ incus_windows_target }}-"
   register: incus_windows_export_tmp
+  when: incus_windows_export_image_artifacts | bool
 
 - name: Build Windows image with Incus
   block:
@@ -153,28 +154,31 @@
         executable: /bin/sh
       changed_when: false
 
-    - name: Publish the stopped VM as a temporary Incus image
+    - name: Publish the stopped VM directly into Incus
       ansible.builtin.command:
         argv:
           - incus
           - publish
           - "{{ incus_windows_build_name }}"
           - --alias
-          - "{{ incus_windows_build_name }}"
+          - "{{ incus_windows_published_alias }}"
           - --compression
           - none
+          - --reuse
           - requirements.cdrom_agent=true
       changed_when: true
 
-    - name: Export the temporary Incus image
+    - name: Export the published Incus image
       ansible.builtin.command:
         argv:
           - incus
           - image
           - export
-          - "{{ incus_windows_build_name }}"
+          - "{{ incus_windows_published_alias }}"
           - "{{ incus_windows_output_dir }}/"
+          - --vm
       changed_when: true
+      when: incus_windows_export_image_artifacts | bool
 
     - name: Find exported tar archives
       ansible.builtin.find:
@@ -182,6 +186,7 @@
         patterns: "*.tar"
         file_type: file
       register: incus_windows_exported_tars
+      when: incus_windows_export_image_artifacts | bool
 
     - name: Extract rootfs.img from exported archive
       ansible.builtin.unarchive:
@@ -192,17 +197,20 @@
           - rootfs.img
       loop: "{{ incus_windows_exported_tars.files }}"
       failed_when: false
+      when: incus_windows_export_image_artifacts | bool
 
     - name: Check extracted rootfs image
       ansible.builtin.stat:
         path: "{{ incus_windows_export_tmp.path }}/rootfs.img"
       register: incus_windows_rootfs_stat
+      when: incus_windows_export_image_artifacts | bool
 
     - name: Ensure exported rootfs image was extracted
       ansible.builtin.assert:
         that:
           - incus_windows_rootfs_stat.stat.exists
         fail_msg: "Could not extract rootfs.img from exported Incus archives in {{ incus_windows_output_dir }}"
+      when: incus_windows_export_image_artifacts | bool
 
     - name: Copy exported disk image into final location
       ansible.builtin.copy:
@@ -210,6 +218,7 @@
         dest: "{{ incus_windows_disk_path }}"
         remote_src: true
         mode: "0644"
+      when: incus_windows_export_image_artifacts | bool
   always:
     - name: Remove exported tar archives
       ansible.builtin.find:
@@ -217,18 +226,22 @@
         patterns: "*.tar"
         file_type: file
       register: incus_windows_exported_tars_for_cleanup
+      when: incus_windows_export_image_artifacts | bool
 
     - name: Delete exported tar archives after extraction
       ansible.builtin.file:
         path: "{{ item.path }}"
         state: absent
       loop: "{{ incus_windows_exported_tars_for_cleanup.files }}"
-      when: incus_windows_exported_tars_for_cleanup.matched | int > 0
+      when:
+        - incus_windows_export_image_artifacts | bool
+        - incus_windows_exported_tars_for_cleanup.matched | int > 0
 
     - name: Remove temporary exported image extraction directory
       ansible.builtin.file:
         path: "{{ incus_windows_export_tmp.path }}"
         state: absent
+      when: incus_windows_export_image_artifacts | bool
 
     - name: Remove temporary ISO repack directory
       ansible.builtin.file:
