@@ -143,6 +143,44 @@
         executable: /bin/bash
       changed_when: false
 
+    - name: Look up any existing final image
+      ansible.builtin.command:
+        argv:
+          - incus
+          - image
+          - list
+          - -f
+          - csv,noheader
+          - -c
+          - lF
+          - "{{ incus_windows_import_alias }}"
+      register: incus_windows_existing_image_list
+      changed_when: false
+
+    - name: Resolve existing final image fingerprint
+      ansible.builtin.set_fact:
+        incus_windows_existing_image_fingerprint: >-
+          {{
+            (
+              incus_windows_existing_image_list.stdout_lines
+              | map('split', ',')
+              | selectattr('0', 'equalto', incus_windows_import_alias)
+              | map('last')
+              | list
+              | first
+            ) | default('')
+          }}
+
+    - name: Delete existing final image before publish
+      ansible.builtin.command:
+        argv:
+          - incus
+          - image
+          - delete
+          - "{{ incus_windows_existing_image_fingerprint }}"
+      changed_when: true
+      when: incus_windows_existing_image_fingerprint | length > 0
+
     - name: Publish the stopped VM directly into Incus
       ansible.builtin.command:
         argv:
@@ -153,8 +191,18 @@
           - "{{ incus_windows_import_alias }}"
           - --compression
           - none
-          - --reuse
           - requirements.cdrom_agent=true
+      changed_when: true
+
+    - name: Set the published image description property
+      ansible.builtin.command:
+        argv:
+          - incus
+          - image
+          - set-property
+          - "{{ incus_windows_import_alias }}"
+          - description
+          - "{{ incus_windows_target_config.description }}"
       changed_when: true
   always:
     - name: Remove temporary ISO repack directory
@@ -162,16 +210,6 @@
         path: "{{ incus_windows_repack_tmp.path }}"
         state: absent
       diff: false
-
-    - name: Remove temporary build image alias
-      ansible.builtin.command:
-        argv:
-          - incus
-          - image
-          - rm
-          - "{{ incus_windows_build_name }}"
-      changed_when: true
-      failed_when: false
 
     - name: Remove temporary build VM
       ansible.builtin.command:
