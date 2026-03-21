@@ -1,5 +1,5 @@
 get-wmiobject win32_logicaldisk | % {
-        if ($_.volumename -like 'STUFF*') {
+	if ($_.volumename -like 'STUFF*') {
 		$setupdrive = $_.deviceid
 	}
 }
@@ -23,10 +23,6 @@ start-sleep 30
 if (test-path "${setupdrive}\local\main.ps1") {
 	. "${setupdrive}\local\main.ps1"
 }
-
-winget install -e --id Google.Chrome --disable-interactivity --accept-package-agreements
-winget install -e --id Microsoft.WinDbg --disable-interactivity --accept-package-agreements
-winget install -e --id 9njv5fq089z0 --disable-interactivity --accept-package-agreements 
 
 #msiexec /i "${setupdrive}\CloudbaseInitSetup_Stable_x64.msi" /qn
 

@@ -1,0 +1,29 @@
+- name: Download virtio driver ISO
+  ansible.builtin.get_url:
+    url: "{{ incus_windows_virtio_archive }}/virtio-win-{{ incus_windows_virtio_version }}/virtio-win.iso"
+    dest: "{{ incus_windows_virtio_iso_path }}"
+    checksum: "sha256:{{ incus_windows_virtio_sha256 }}"
+    mode: "0644"
+  when: incus_windows_virtio_iso_override | default('', true) | length == 0
+
+- name: Download Windows ISO when no local override is provided
+  ansible.builtin.get_url:
+    url: "{{ incus_windows_target_config.url }}"
+    dest: "{{ incus_windows_windows_iso_path }}"
+    checksum: "sha256:{{ incus_windows_target_config.sha256 }}"
+    mode: "0644"
+  when: incus_windows_alt_iso | default('', true) | length == 0
+
+- name: Check resolved Autounattend file
+  ansible.builtin.stat:
+    path: "{{ incus_windows_autounattend_path }}"
+  register: incus_windows_autounattend_stat
+  delegate_to: localhost
+  become: false
+
+- name: Ensure resolved Autounattend file is readable
+  ansible.builtin.assert:
+    that:
+      - incus_windows_autounattend_stat.stat.isreg | default(false)
+      - incus_windows_autounattend_stat.stat.readable | default(false)
+    fail_msg: "Autounattend file is not readable: {{ incus_windows_autounattend_path }}"

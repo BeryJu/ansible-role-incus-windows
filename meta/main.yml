@@ -1,0 +1,10 @@
+---
+galaxy_info:
+  author: BeryJu
+  namespace: beryju
+  role_name: incus_windows
+  description: Build Windows images for Incus
+  license: MIT
+  company: none
+  min_ansible_version: "2.11"
+dependencies: []

@@ -1,0 +1,5 @@
+- name: Build an Incus Windows image
+  hosts: all
+  gather_facts: false
+  roles:
+    - role: .
