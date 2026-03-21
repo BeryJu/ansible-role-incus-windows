@@ -16,10 +16,10 @@ BOOT_MARKERS = (
 )
 
 
-def read_available(fd: int, timeout: float) -> bytes:
+def read_available(fd: int) -> bytes:
     poller = select.poll()
     poller.register(fd, select.POLLIN | select.POLLHUP | select.POLLERR)
-    if not poller.poll(int(timeout * 1000)):
+    if not poller.poll():
         return b""
     try:
         return os.read(fd, 4096)
@@ -57,7 +57,7 @@ def main() -> int:
 
     try:
         while time.time() < observe_deadline:
-            buffer += read_available(fd, 0.5)
+            buffer += read_available(fd)
             if any(marker in buffer for marker in BOOT_MARKERS):
                 matched = True
                 break

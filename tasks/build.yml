@@ -121,6 +121,22 @@
           {{ incus_windows_enter_spam_seconds | int }}
       changed_when: true
 
+    - name: Wait for the build VM to report a guest IP
+      ansible.builtin.command:
+        argv:
+          - incus
+          - list
+          - -f
+          - csv,noheader
+          - -c
+          - "4"
+          - "{{ incus_windows_build_name }}"
+      register: incus_windows_guest_ip_result
+      changed_when: false
+      until: incus_windows_guest_ip_result.stdout | trim | length > 0
+      retries: "{{ incus_windows_guest_ip_timeout_seconds | int }}"
+      delay: 1
+
     - name: Wait for the build VM to remain stopped for 10 seconds
       ansible.builtin.shell: |
         set -o pipefail
