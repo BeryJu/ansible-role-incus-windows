@@ -29,7 +29,7 @@ The role is intended to target the machine where Incus is running. Source assets
 - `uv`
 - `incus`
 
-`uv` manages the Python environment and installs `ansible-core` plus `pexpect`, which the playbook uses for the console automation step. The role installs `xorriso` automatically on the Incus host.
+`uv` manages the Python environment and installs `ansible-core`. The role installs `xorriso` automatically on the Incus host.
 
 ```sh
 # install uv if needed

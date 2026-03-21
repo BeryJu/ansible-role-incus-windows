@@ -121,15 +121,12 @@
       when: incus_windows_target_config.requires_tpm | default(false) | bool
 
     - name: Boot the VM and spam Enter at the firmware boot prompt
-      ansible.builtin.expect:
-        command: "incus start --console {{ incus_windows_build_name }}"
-        responses:
-          '.*starting.*(CD|DVD).*PciRoot.*': "\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r"
-        timeout: "{{ incus_windows_console_timeout_seconds }}"
-      register: incus_windows_console_result
-      failed_when: >-
-        incus_windows_console_result.rc | default(0) != 0
-        and 'timed out' not in (incus_windows_console_result.msg | default('') | lower)
+      ansible.builtin.script:
+        cmd: >-
+          {{ role_path }}/files/start_console_and_spam_enter.py
+          {{ incus_windows_build_name }}
+          {{ incus_windows_console_timeout_seconds | int }}
+          {{ incus_windows_enter_spam_seconds | int }}
       changed_when: true
 
     - name: Wait for the build VM to remain stopped for 10 seconds
