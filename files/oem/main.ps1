@@ -51,4 +51,18 @@ if (test-path "${setupdrive}\local\main.ps1") {
 	. "${setupdrive}\local\main.ps1"
 }
 
-cmd.exe /c "${setupdrive}\OEM\sysprep.bat" "${setupdrive}\OEM\unattend.xml"
+New-Item -ItemType Directory -Force -Path "$env:WINDIR\Setup\Scripts" | Out-Null
+
+Log "Disable WinRM until Windows is fully initialized / started"
+netsh advfirewall firewall set rule name="Allow WinRM HTTPS" new action=block
+netsh advfirewall firewall set rule name="Windows Remote Management (HTTP-In)" new action=block
+
+$setupComplete = "$env:WINDIR\Setup\Scripts\SetupComplete.cmd"
+
+# Write lines that will re-enable WinRM once Windows finishes initializing.
+# SetupComplete.cmd is a batch file, so %WINDIR% must be written literally.
+Add-Content -Path $setupComplete -Value 'netsh advfirewall firewall set rule name="Allow WinRM HTTPS" new action=allow >> %WINDIR%\Temp\SetupComplete.log'
+Add-Content -Path $setupComplete -Value 'netsh advfirewall firewall set rule name="Windows Remote Management (HTTP-In)" new action=allow >> %WINDIR%\Temp\SetupComplete.log'
+
+Log "Running sysprep"
+& "$env:WINDIR\System32\Sysprep\sysprep.exe" /generalize /oobe /shutdown /unattend:"${setupdrive}\OEM\unattend.xml"
