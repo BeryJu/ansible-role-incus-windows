@@ -133,6 +133,7 @@
 
     - name: Wait for the build VM to remain stopped for 10 seconds
       ansible.builtin.shell: |
+        set -o pipefail
         deadline=$(( $(date +%s) + {{ incus_windows_build_timeout_seconds | int }} ))
         stopped_for=0
         while [ "$(date +%s)" -lt "$deadline" ]; do
