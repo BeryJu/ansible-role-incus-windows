@@ -123,7 +123,7 @@
       ansible.builtin.expect:
         command: "incus start --console {{ incus_windows_build_name }}"
         responses:
-          '(PciRoot|Booting from DVD/CD)': "\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r"
+          '.*starting.*(CD|DVD).*PciRoot.*': "\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r"
         timeout: "{{ incus_windows_console_timeout_seconds }}"
       register: incus_windows_console_result
       failed_when: >-

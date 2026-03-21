@@ -8,7 +8,7 @@
     incus_windows_root_size: >-
       {{ incus_windows_targets[incus_windows_target].root_size | default(incus_windows_default_root_size) }}
     incus_windows_build_name: >-
-      build{{ now(utc=true, fmt='%Y%m%d%H%M%S') }}{{ '%06d' | format(1000000 | random) }}
+      build-{{ incus_windows_target }}-{{ now(utc=true, fmt='%Y%m%d%H%M%S') }}{{ '%06d' | format(1000000 | random) }}
 
 - name: Resolve filesystem paths
   ansible.builtin.set_fact:
