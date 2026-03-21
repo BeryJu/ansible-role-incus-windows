@@ -131,18 +131,25 @@
         and 'timed out' not in (incus_windows_console_result.msg | default('') | lower)
       changed_when: true
 
-    - name: Wait for the build VM to stop
-      ansible.builtin.command:
-        argv:
-          - incus
-          - list
-          - --format=json
-          - "{{ incus_windows_build_name }}"
-      register: incus_windows_instance_state
-      until: >
-        (incus_windows_instance_state.stdout | from_json | first).status == 'Stopped'
-      retries: "{{ (incus_windows_build_timeout_seconds // 10) | int }}"
-      delay: 10
+    - name: Wait for the build VM to remain stopped for 10 seconds
+      ansible.builtin.shell: |
+        deadline=$(( $(date +%s) + {{ incus_windows_build_timeout_seconds | int }} ))
+        stopped_for=0
+        while [ "$(date +%s)" -lt "$deadline" ]; do
+          if incus ls -fcsv -cns "{{ incus_windows_build_name }}" | grep -q "^{{ incus_windows_build_name }},STOPPED$"; then
+            stopped_for=$((stopped_for + 1))
+            if [ "$stopped_for" -ge "{{ incus_windows_stopped_grace_seconds | int }}" ]; then
+              exit 0
+            fi
+          else
+            stopped_for=0
+          fi
+          sleep 1
+        done
+        echo "VM {{ incus_windows_build_name }} did not remain STOPPED for {{ incus_windows_stopped_grace_seconds | int }} consecutive seconds within {{ incus_windows_build_timeout_seconds | int }} seconds" >&2
+        exit 1
+      args:
+        executable: /bin/sh
       changed_when: false
 
     - name: Publish the stopped VM as a temporary Incus image

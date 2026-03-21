@@ -19,6 +19,7 @@ incus_windows_build_memory: 8GB
 incus_windows_default_root_size: 30GiB
 incus_windows_build_timeout_seconds: 7200
 incus_windows_console_timeout_seconds: 30
+incus_windows_stopped_grace_seconds: 10
 
 incus_windows_import_image: true
 incus_windows_import_alias: "{{ incus_windows_output_dir | basename }}"
