@@ -1,6 +1,9 @@
 - name: Validate role inputs
   ansible.builtin.include_tasks: validate.yml
 
+- name: Ensure host prerequisites are installed
+  ansible.builtin.include_tasks: prerequisites.yml
+
 - name: Resolve target configuration
   ansible.builtin.set_fact:
     incus_windows_target_config: "{{ incus_windows_targets[incus_windows_target] }}"

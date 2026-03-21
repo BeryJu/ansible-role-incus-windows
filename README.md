@@ -27,13 +27,10 @@ The role is intended to target the machine where Incus is running. Source assets
 
 - `uv`
 - `incus`
-- `xorriso`
 
-`uv` manages the Python environment and installs `ansible-core` plus `pexpect`, which the playbook uses for the console automation step.
+`uv` manages the Python environment and installs `ansible-core` plus `pexpect`, which the playbook uses for the console automation step. The role installs `xorriso` automatically on the Incus host.
 
 ```sh
-apt-get --install-recommends install xorriso
-
 # install uv if needed
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
@@ -53,6 +50,7 @@ uv sync
 ```
 
 Run the playbook against the Incus host. The repository checkout only needs to exist on the Ansible controller; the role copies `oem/`, `unattend/`, and optional local payloads to the remote host as part of the build.
+The playbook installs `xorriso` on the remote host, so the Ansible user needs package-management privileges there.
 
 Build and import a Windows image:
 

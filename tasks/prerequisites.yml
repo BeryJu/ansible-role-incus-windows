@@ -1,0 +1,5 @@
+- name: Ensure xorriso is installed on the Incus host
+  ansible.builtin.package:
+    name: xorriso
+    state: present
+  become: true
