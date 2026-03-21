@@ -75,9 +75,9 @@
           - "{{ incus_windows_build_name }}"
           - raw.apparmor
           - "-"
-      stdin: |-
-        {{ incus_windows_windows_iso_path }} rwk,
-        {{ incus_windows_unattended_iso_path }} rwk,
+        stdin: |-
+          {{ incus_windows_windows_iso_path }} rwk,
+          {{ incus_windows_unattended_iso_path }} rwk,
       changed_when: true
 
     - name: Configure QEMU CD-ROM ordering
@@ -89,9 +89,9 @@
           - "{{ incus_windows_build_name }}"
           - raw.qemu
           - "-"
-      stdin: >-
-        -drive file={{ incus_windows_windows_iso_path }},index=0,media=cdrom,if=ide
-        -drive file={{ incus_windows_unattended_iso_path }},index=1,media=cdrom,if=ide
+        stdin: >-
+          -drive file={{ incus_windows_windows_iso_path }},index=0,media=cdrom,if=ide
+          -drive file={{ incus_windows_unattended_iso_path }},index=1,media=cdrom,if=ide
       changed_when: true
 
     - name: Enable CSM for Windows Server 2008
