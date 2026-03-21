@@ -7,8 +7,7 @@ An Ansible-based Incus Windows image builder.
 - Downloads and verifies Windows and virtio ISOs.
 - Rebuilds the unattended ISO with `Autounattend.xml`, `oem/`, and optional local payloads.
 - Builds a Windows VM image directly in Incus.
-- Optionally exports `disk.qcow2` plus `incus.tar.xz` when filesystem artifacts are requested.
-- Optionally imports the image into Incus and launches a VM from it.
+- Publishes the finished image directly into Incus.
 - Keeps the build flow declarative where Ansible has native modules, and uses direct commands only for `incus` and `xorriso`.
 
 The role is intended to target the machine where Incus is running. Source assets such as `oem/`, `unattend/`, and optional local customization payloads are read on the Ansible controller. ISO paths, temporary files, output artifacts, and all Incus operations are performed on the remote Incus host.
@@ -59,21 +58,7 @@ Build and import a Windows image:
 uv run ansible-playbook -i incus-host, build.yml -e incus_windows_target=2022
 ```
 
-By default this publishes the image directly into Incus and does not run `incus image export`, which avoids creating a large temporary image tarball on disk.
-
-If you also want filesystem artifacts on the remote Incus host, enable export explicitly:
-
-```sh
-uv run ansible-playbook -i incus-host, build.yml \
-  -e incus_windows_target=2022 \
-  -e incus_windows_export_image_artifacts=true
-```
-
-That creates the build artifacts under `incus_windows_output_root`:
-
-- `disk.qcow2`
-- `incus.tar.xz`
-- `unattended-2022.iso`
+This publishes the image directly into Incus and does not run `incus image export`, which avoids creating a large temporary image tarball on disk. The role still writes `unattended-<target>.iso` under `incus_windows_output_dir` on the remote Incus host.
 
 ## Customizations
 
@@ -130,8 +115,6 @@ Useful variables:
 - `incus_windows_virtio_iso_override`
 - `incus_windows_alt_autounattend`
 - `incus_windows_local_dir`
-- `incus_windows_import_image`
-- `incus_windows_export_image_artifacts`
 - `incus_windows_import_alias`
 - `incus_windows_iso_dir`
 - `incus_windows_output_dir`
@@ -141,8 +124,8 @@ Useful variables:
 Make sure the project filesystem has enough space.
 
 - `incus_windows_iso_dir` on the remote Incus host caches the downloaded Windows and virtio ISOs.
-- `incus_windows_tmp_root` on the remote Incus host is used while repacking and exporting images.
-- `incus_windows_output_root` on the remote Incus host contains the final qcow2 disk, metadata archive, and unattended ISO.
+- `incus_windows_tmp_root` on the remote Incus host is used while repacking and building images.
+- `incus_windows_output_root` on the remote Incus host contains the unattended ISO for the selected target.
 
 ## Windows Server 2008 R2 SP1
 

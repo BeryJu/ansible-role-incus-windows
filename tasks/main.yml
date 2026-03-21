@@ -34,14 +34,6 @@
         else incus_windows_iso_dir ~ '/virtio-win-' ~ incus_windows_virtio_version ~ '.iso'
       }}
     incus_windows_unattended_iso_path: "{{ incus_windows_output_dir }}/unattended-{{ incus_windows_target }}.iso"
-    incus_windows_metadata_path: "{{ incus_windows_output_dir }}/incus.tar.xz"
-    incus_windows_disk_path: "{{ incus_windows_output_dir }}/disk.qcow2"
-    incus_windows_published_alias: >-
-      {{
-        incus_windows_import_alias
-        if incus_windows_import_image | bool
-        else incus_windows_build_name
-      }}
 
 - name: Ensure output root exists
   ansible.builtin.file:
@@ -78,9 +70,5 @@
 - name: Repack the unattended ISO
   ansible.builtin.include_tasks: repack.yml
 
-- name: Build and export the Incus image
+- name: Build and publish the Incus image
   ansible.builtin.include_tasks: build.yml
-
-- name: Generate Incus metadata archive
-  ansible.builtin.include_tasks: metadata.yml
-  when: incus_windows_export_image_artifacts | bool

@@ -7,14 +7,6 @@
       Set incus_windows_target to one of:
       {{ incus_windows_targets.keys() | join(', ') }}
 
-- name: Ensure the build has at least one output mode
-  ansible.builtin.assert:
-    that:
-      - incus_windows_import_image | bool or incus_windows_export_image_artifacts | bool
-    fail_msg: >-
-      Enable at least one output mode: set incus_windows_import_image=true
-      and/or incus_windows_export_image_artifacts=true.
-
 - name: Check OEM directory
   ansible.builtin.stat:
     path: "{{ incus_windows_oem_dir }}"
