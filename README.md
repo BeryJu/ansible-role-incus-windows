@@ -108,7 +108,6 @@ These paths are resolved on the remote Incus host:
 
 These paths are resolved on the Ansible controller:
 
-- `incus_windows_controller_dir`
 - `incus_windows_oem_dir`
 - `incus_windows_unattend_root`
 - `incus_windows_alt_autounattend`
@@ -117,7 +116,6 @@ These paths are resolved on the Ansible controller:
 Useful variables:
 
 - `incus_windows_target`
-- `incus_windows_controller_dir`
 - `incus_windows_workspace_dir`
 - `incus_windows_alt_iso`
 - `incus_windows_virtio_iso_override`

@@ -1,6 +1,5 @@
 incus_windows_target: ""
 
-incus_windows_controller_dir: "{{ playbook_dir }}"
 incus_windows_workspace_dir: /opt/incus-windows
 
 incus_windows_iso_dir: "{{ incus_windows_workspace_dir }}/isos"
@@ -12,8 +11,8 @@ incus_windows_alt_iso: ""
 incus_windows_virtio_iso_override: ""
 incus_windows_alt_autounattend: ""
 incus_windows_local_dir: ""
-incus_windows_oem_dir: "{{ incus_windows_controller_dir }}/oem"
-incus_windows_unattend_root: "{{ incus_windows_controller_dir }}/unattend"
+incus_windows_oem_dir: "{{ role_path }}/files/oem"
+incus_windows_unattend_root: "{{ role_path }}/files/unattend"
 
 incus_windows_build_cpus: 4
 incus_windows_build_memory: 8GB
