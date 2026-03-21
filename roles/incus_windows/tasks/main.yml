@@ -1,0 +1,85 @@
+- name: Validate role inputs
+  ansible.builtin.include_tasks: validate.yml
+
+- name: Resolve target configuration
+  ansible.builtin.set_fact:
+    incus_windows_target_config: "{{ incus_windows_targets[incus_windows_target] }}"
+    incus_windows_default_autounattend: "{{ playbook_dir }}/unattend/{{ incus_windows_target }}/Autounattend.xml"
+    incus_windows_root_size: >-
+      {{ incus_windows_targets[incus_windows_target].root_size | default(incus_windows_default_root_size) }}
+    incus_windows_build_name: >-
+      build{{ now(utc=true, fmt='%Y%m%d%H%M%S') }}{{ '%06d' | format(1000000 | random) }}
+
+- name: Resolve filesystem paths
+  ansible.builtin.set_fact:
+    incus_windows_autounattend_path: >-
+      {{
+        incus_windows_alt_autounattend
+        if (incus_windows_alt_autounattend | default('', true) | length > 0)
+        else incus_windows_default_autounattend
+      }}
+    incus_windows_windows_iso_path: >-
+      {{
+        incus_windows_alt_iso
+        if incus_windows_alt_iso | default('', true)
+        else incus_windows_iso_dir ~ '/' ~ (incus_windows_target_config.url | basename)
+      }}
+    incus_windows_virtio_iso_path: "{{ incus_windows_iso_dir }}/virtio-win-{{ incus_windows_virtio_version }}.iso"
+    incus_windows_unattended_iso_path: "{{ incus_windows_output_dir }}/unattended-{{ incus_windows_target }}.iso"
+    incus_windows_metadata_path: "{{ incus_windows_output_dir }}/incus.tar.xz"
+    incus_windows_disk_path: "{{ incus_windows_output_dir }}/disk.qcow2"
+
+- name: Ensure output root exists
+  ansible.builtin.file:
+    path: "{{ incus_windows_output_root }}"
+    state: directory
+    mode: "0755"
+
+- name: Ensure ISO cache exists
+  ansible.builtin.file:
+    path: "{{ incus_windows_iso_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Ensure tmp root exists
+  ansible.builtin.file:
+    path: "{{ incus_windows_tmp_root }}"
+    state: directory
+    mode: "0755"
+
+- name: Check whether output directory already exists
+  ansible.builtin.stat:
+    path: "{{ incus_windows_output_dir }}"
+  register: incus_windows_output_dir_stat
+
+- name: Refuse to overwrite an existing output directory
+  ansible.builtin.assert:
+    that:
+      - not incus_windows_output_dir_stat.stat.exists
+    fail_msg: "Output directory already exists: {{ incus_windows_output_dir }}"
+
+- name: Create empty output directory
+  ansible.builtin.file:
+    path: "{{ incus_windows_output_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Download and validate source artifacts
+  ansible.builtin.include_tasks: download.yml
+
+- name: Repack the unattended ISO
+  ansible.builtin.include_tasks: repack.yml
+
+- name: Build and export the Incus image
+  ansible.builtin.include_tasks: build.yml
+
+- name: Generate Incus metadata archive
+  ansible.builtin.include_tasks: metadata.yml
+
+- name: Optionally import the image into Incus
+  ansible.builtin.include_tasks: import.yml
+  when: incus_windows_import_image | bool
+
+- name: Optionally launch a VM from the imported image
+  ansible.builtin.include_tasks: launch.yml
+  when: incus_windows_launch_image | bool

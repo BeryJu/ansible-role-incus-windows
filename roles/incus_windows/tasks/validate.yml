@@ -1,0 +1,60 @@
+- name: Validate supported target selection
+  ansible.builtin.assert:
+    that:
+      - incus_windows_target | length > 0
+      - incus_windows_target in incus_windows_targets
+    fail_msg: >-
+      Set incus_windows_target to one of:
+      {{ incus_windows_targets.keys() | join(', ') }}
+
+- name: Check OEM directory
+  ansible.builtin.stat:
+    path: "{{ incus_windows_oem_dir }}"
+  register: incus_windows_oem_dir_stat
+
+- name: Ensure OEM directory exists
+  ansible.builtin.assert:
+    that:
+      - incus_windows_oem_dir_stat.stat.isdir | default(false)
+    fail_msg: "OEM directory not found: {{ incus_windows_oem_dir }}"
+
+- name: Check custom ISO when provided
+  ansible.builtin.stat:
+    path: "{{ incus_windows_alt_iso }}"
+  register: incus_windows_alt_iso_stat
+  when: incus_windows_alt_iso | default('', true) | length > 0
+
+- name: Ensure custom ISO is readable
+  ansible.builtin.assert:
+    that:
+      - incus_windows_alt_iso_stat.stat.isreg | default(false)
+      - incus_windows_alt_iso_stat.stat.readable | default(false)
+    fail_msg: "Custom ISO is not readable: {{ incus_windows_alt_iso }}"
+  when: incus_windows_alt_iso | default('', true) | length > 0
+
+- name: Check custom Autounattend file when provided
+  ansible.builtin.stat:
+    path: "{{ incus_windows_alt_autounattend }}"
+  register: incus_windows_alt_autounattend_stat
+  when: incus_windows_alt_autounattend | default('', true) | length > 0
+
+- name: Ensure custom Autounattend file is readable
+  ansible.builtin.assert:
+    that:
+      - incus_windows_alt_autounattend_stat.stat.isreg | default(false)
+      - incus_windows_alt_autounattend_stat.stat.readable | default(false)
+    fail_msg: "Autounattend file is not readable: {{ incus_windows_alt_autounattend }}"
+  when: incus_windows_alt_autounattend | default('', true) | length > 0
+
+- name: Check local customization directory when provided
+  ansible.builtin.stat:
+    path: "{{ incus_windows_local_dir }}"
+  register: incus_windows_local_dir_stat
+  when: incus_windows_local_dir | default('', true) | length > 0
+
+- name: Ensure local customization directory exists
+  ansible.builtin.assert:
+    that:
+      - incus_windows_local_dir_stat.stat.isdir | default(false)
+    fail_msg: "Local customization directory not found: {{ incus_windows_local_dir }}"
+  when: incus_windows_local_dir | default('', true) | length > 0

@@ -1,0 +1,248 @@
+- name: Create temporary directory for exported image extraction
+  ansible.builtin.tempfile:
+    path: "{{ incus_windows_tmp_root }}"
+    state: directory
+    prefix: "image-export-{{ incus_windows_target }}-"
+  register: incus_windows_export_tmp
+
+- name: Build Windows image with Incus
+  block:
+    - name: Initialize build VM
+      ansible.builtin.command:
+        argv:
+          - incus
+          - init
+          - "{{ incus_windows_build_name }}"
+          - --empty
+          - --vm
+          - -c
+          - security.secureboot=false
+          - -c
+          - limits.cpu={{ incus_windows_build_cpus }}
+          - -c
+          - limits.memory={{ incus_windows_build_memory }}
+          - -c
+          - image.os=windows
+          - -d
+          - root,size={{ incus_windows_root_size }}
+      changed_when: true
+
+    - name: Use NVMe for the build root disk
+      ansible.builtin.command:
+        argv:
+          - incus
+          - config
+          - device
+          - set
+          - "{{ incus_windows_build_name }}"
+          - root
+          - io.bus=nvme
+      changed_when: true
+
+    - name: Attach Windows ISO
+      ansible.builtin.command:
+        argv:
+          - incus
+          - config
+          - device
+          - add
+          - "{{ incus_windows_build_name }}"
+          - iso
+          - disk
+          - source={{ incus_windows_windows_iso_path }}
+          - boot.priority=10
+      changed_when: true
+
+    - name: Attach Incus agent ISO
+      ansible.builtin.command:
+        argv:
+          - incus
+          - config
+          - device
+          - add
+          - "{{ incus_windows_build_name }}"
+          - incusagent
+          - disk
+          - source=agent:config
+      changed_when: true
+
+    - name: Allow build VM access to ISO paths
+      ansible.builtin.command:
+        argv:
+          - incus
+          - config
+          - set
+          - "{{ incus_windows_build_name }}"
+          - raw.apparmor
+          - "-"
+      stdin: |-
+        {{ incus_windows_windows_iso_path }} rwk,
+        {{ incus_windows_unattended_iso_path }} rwk,
+      changed_when: true
+
+    - name: Configure QEMU CD-ROM ordering
+      ansible.builtin.command:
+        argv:
+          - incus
+          - config
+          - set
+          - "{{ incus_windows_build_name }}"
+          - raw.qemu
+          - "-"
+      stdin: >-
+        -drive file={{ incus_windows_windows_iso_path }},index=0,media=cdrom,if=ide
+        -drive file={{ incus_windows_unattended_iso_path }},index=1,media=cdrom,if=ide
+      changed_when: true
+
+    - name: Enable CSM for Windows Server 2008
+      ansible.builtin.command:
+        argv:
+          - incus
+          - config
+          - set
+          - "{{ incus_windows_build_name }}"
+          - security.csm
+          - "true"
+      changed_when: true
+      when: incus_windows_target_config.security_csm | default(false) | bool
+
+    - name: Add TPM for Windows 11 builds
+      ansible.builtin.command:
+        argv:
+          - incus
+          - config
+          - device
+          - add
+          - "{{ incus_windows_build_name }}"
+          - tpm
+          - tpm
+      changed_when: true
+      when: incus_windows_target_config.requires_tpm | default(false) | bool
+
+    - name: Boot the VM and spam Enter at the firmware boot prompt
+      ansible.builtin.expect:
+        command: "incus start --console {{ incus_windows_build_name }}"
+        responses:
+          '(PciRoot|Booting from DVD/CD)': "\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r"
+        timeout: "{{ incus_windows_console_timeout_seconds }}"
+      register: incus_windows_console_result
+      failed_when: >-
+        incus_windows_console_result.rc | default(0) != 0
+        and 'timed out' not in (incus_windows_console_result.msg | default('') | lower)
+      changed_when: true
+
+    - name: Wait for the build VM to stop
+      ansible.builtin.command:
+        argv:
+          - incus
+          - list
+          - --format=json
+          - "{{ incus_windows_build_name }}"
+      register: incus_windows_instance_state
+      until: >
+        (incus_windows_instance_state.stdout | from_json | first).status == 'Stopped'
+      retries: "{{ (incus_windows_build_timeout_seconds // 10) | int }}"
+      delay: 10
+      changed_when: false
+
+    - name: Publish the stopped VM as a temporary Incus image
+      ansible.builtin.command:
+        argv:
+          - incus
+          - publish
+          - "{{ incus_windows_build_name }}"
+          - --alias
+          - "{{ incus_windows_build_name }}"
+          - --compression
+          - none
+          - requirements.cdrom_agent=true
+      changed_when: true
+
+    - name: Export the temporary Incus image
+      ansible.builtin.command:
+        argv:
+          - incus
+          - image
+          - export
+          - "{{ incus_windows_build_name }}"
+          - "{{ incus_windows_output_dir }}/"
+      changed_when: true
+
+    - name: Find exported tar archives
+      ansible.builtin.find:
+        paths: "{{ incus_windows_output_dir }}"
+        patterns: "*.tar"
+        file_type: file
+      register: incus_windows_exported_tars
+
+    - name: Extract rootfs.img from exported archive
+      ansible.builtin.unarchive:
+        src: "{{ item.path }}"
+        dest: "{{ incus_windows_export_tmp.path }}"
+        remote_src: true
+        include:
+          - rootfs.img
+      loop: "{{ incus_windows_exported_tars.files }}"
+      failed_when: false
+
+    - name: Check extracted rootfs image
+      ansible.builtin.stat:
+        path: "{{ incus_windows_export_tmp.path }}/rootfs.img"
+      register: incus_windows_rootfs_stat
+
+    - name: Ensure exported rootfs image was extracted
+      ansible.builtin.assert:
+        that:
+          - incus_windows_rootfs_stat.stat.exists
+        fail_msg: "Could not extract rootfs.img from exported Incus archives in {{ incus_windows_output_dir }}"
+
+    - name: Copy exported disk image into final location
+      ansible.builtin.copy:
+        src: "{{ incus_windows_export_tmp.path }}/rootfs.img"
+        dest: "{{ incus_windows_disk_path }}"
+        remote_src: true
+        mode: "0644"
+  always:
+    - name: Remove exported tar archives
+      ansible.builtin.find:
+        paths: "{{ incus_windows_output_dir }}"
+        patterns: "*.tar"
+        file_type: file
+      register: incus_windows_exported_tars_for_cleanup
+
+    - name: Delete exported tar archives after extraction
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ incus_windows_exported_tars_for_cleanup.files }}"
+      when: incus_windows_exported_tars_for_cleanup.matched | int > 0
+
+    - name: Remove temporary exported image extraction directory
+      ansible.builtin.file:
+        path: "{{ incus_windows_export_tmp.path }}"
+        state: absent
+
+    - name: Remove temporary ISO repack directory
+      ansible.builtin.file:
+        path: "{{ incus_windows_repack_tmp.path }}"
+        state: absent
+
+    - name: Remove temporary build image alias
+      ansible.builtin.command:
+        argv:
+          - incus
+          - image
+          - rm
+          - "{{ incus_windows_build_name }}"
+      changed_when: true
+      failed_when: false
+
+    - name: Remove temporary build VM
+      ansible.builtin.command:
+        argv:
+          - incus
+          - delete
+          - -f
+          - "{{ incus_windows_build_name }}"
+      changed_when: true
+      failed_when: false

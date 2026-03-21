@@ -1,0 +1,70 @@
+- name: Create temporary working directory for ISO repack
+  ansible.builtin.tempfile:
+    path: "{{ incus_windows_tmp_root }}"
+    state: directory
+    prefix: "virtio-{{ incus_windows_target }}-"
+  register: incus_windows_repack_tmp
+
+- name: Extract virtio ISO
+  ansible.builtin.command:
+    argv:
+      - xorriso
+      - -report_about
+      - SORRY
+      - -osirrox
+      - "on"
+      - -indev
+      - "{{ incus_windows_virtio_iso_path }}"
+      - -extract
+      - /
+      - "{{ incus_windows_repack_tmp.path }}/virtio"
+  changed_when: true
+
+- name: Ensure extracted ISO tree is writable
+  ansible.builtin.file:
+    path: "{{ incus_windows_repack_tmp.path }}/virtio"
+    state: directory
+    recurse: true
+    mode: u+rwx
+
+- name: Copy OEM payload into extracted ISO tree
+  ansible.builtin.copy:
+    src: "{{ incus_windows_oem_dir }}/"
+    dest: "{{ incus_windows_repack_tmp.path }}/virtio/OEM/"
+    remote_src: true
+    mode: preserve
+
+- name: Copy Autounattend.xml into extracted ISO tree
+  ansible.builtin.copy:
+    src: "{{ incus_windows_autounattend_path }}"
+    dest: "{{ incus_windows_repack_tmp.path }}/virtio/Autounattend.xml"
+    remote_src: true
+    mode: preserve
+
+- name: Copy local customization payload into extracted ISO tree
+  ansible.builtin.copy:
+    src: "{{ incus_windows_local_dir }}/"
+    dest: "{{ incus_windows_repack_tmp.path }}/virtio/local/"
+    remote_src: true
+    mode: preserve
+  when: incus_windows_local_dir | default('', true) | length > 0
+
+- name: Remove any previous unattended ISO artifact
+  ansible.builtin.file:
+    path: "{{ incus_windows_unattended_iso_path }}"
+    state: absent
+
+- name: Build unattended ISO
+  ansible.builtin.command:
+    argv:
+      - xorriso
+      - -as
+      - mkisofs
+      - -o
+      - "{{ incus_windows_unattended_iso_path }}"
+      - -R
+      - -J
+      - -V
+      - STUFF
+      - "{{ incus_windows_repack_tmp.path }}/virtio"
+  changed_when: true

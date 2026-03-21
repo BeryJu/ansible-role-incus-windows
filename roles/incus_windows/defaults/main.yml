@@ -1,0 +1,23 @@
+incus_windows_target: ""
+
+incus_windows_iso_dir: "{{ playbook_dir }}/isos"
+incus_windows_output_root: "{{ playbook_dir }}/output"
+incus_windows_output_dir: "{{ incus_windows_output_root }}/win{{ incus_windows_target }}"
+incus_windows_tmp_root: "{{ playbook_dir }}/tmp"
+
+incus_windows_alt_iso: ""
+incus_windows_alt_autounattend: ""
+incus_windows_local_dir: ""
+incus_windows_oem_dir: "{{ playbook_dir }}/oem"
+
+incus_windows_build_cpus: 4
+incus_windows_build_memory: 8GB
+incus_windows_default_root_size: 30GiB
+incus_windows_build_timeout_seconds: 7200
+incus_windows_console_timeout_seconds: 30
+
+incus_windows_import_image: false
+incus_windows_import_alias: "{{ incus_windows_output_dir | basename }}"
+
+incus_windows_launch_image: false
+incus_windows_instance_name: "win{{ incus_windows_target }}"
