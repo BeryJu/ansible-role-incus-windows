@@ -4,7 +4,7 @@
 - name: Resolve target configuration
   ansible.builtin.set_fact:
     incus_windows_target_config: "{{ incus_windows_targets[incus_windows_target] }}"
-    incus_windows_default_autounattend: "{{ playbook_dir }}/unattend/{{ incus_windows_target }}/Autounattend.xml"
+    incus_windows_default_autounattend: "{{ incus_windows_unattend_root }}/{{ incus_windows_target }}/Autounattend.xml"
     incus_windows_root_size: >-
       {{ incus_windows_targets[incus_windows_target].root_size | default(incus_windows_default_root_size) }}
     incus_windows_build_name: >-
@@ -24,7 +24,12 @@
         if incus_windows_alt_iso | default('', true)
         else incus_windows_iso_dir ~ '/' ~ (incus_windows_target_config.url | basename)
       }}
-    incus_windows_virtio_iso_path: "{{ incus_windows_iso_dir }}/virtio-win-{{ incus_windows_virtio_version }}.iso"
+    incus_windows_virtio_iso_path: >-
+      {{
+        incus_windows_virtio_iso_override
+        if incus_windows_virtio_iso_override | default('', true)
+        else incus_windows_iso_dir ~ '/virtio-win-' ~ incus_windows_virtio_version ~ '.iso'
+      }}
     incus_windows_unattended_iso_path: "{{ incus_windows_output_dir }}/unattended-{{ incus_windows_target }}.iso"
     incus_windows_metadata_path: "{{ incus_windows_output_dir }}/incus.tar.xz"
     incus_windows_disk_path: "{{ incus_windows_output_dir }}/disk.qcow2"
@@ -51,12 +56,6 @@
   ansible.builtin.stat:
     path: "{{ incus_windows_output_dir }}"
   register: incus_windows_output_dir_stat
-
-- name: Refuse to overwrite an existing output directory
-  ansible.builtin.assert:
-    that:
-      - not incus_windows_output_dir_stat.stat.exists
-    fail_msg: "Output directory already exists: {{ incus_windows_output_dir }}"
 
 - name: Create empty output directory
   ansible.builtin.file:

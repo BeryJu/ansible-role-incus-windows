@@ -11,12 +11,27 @@
   ansible.builtin.stat:
     path: "{{ incus_windows_oem_dir }}"
   register: incus_windows_oem_dir_stat
+  delegate_to: localhost
+  become: false
 
 - name: Ensure OEM directory exists
   ansible.builtin.assert:
     that:
       - incus_windows_oem_dir_stat.stat.isdir | default(false)
     fail_msg: "OEM directory not found: {{ incus_windows_oem_dir }}"
+
+- name: Check unattend root directory
+  ansible.builtin.stat:
+    path: "{{ incus_windows_unattend_root }}"
+  register: incus_windows_unattend_root_stat
+  delegate_to: localhost
+  become: false
+
+- name: Ensure unattend root directory exists
+  ansible.builtin.assert:
+    that:
+      - incus_windows_unattend_root_stat.stat.isdir | default(false)
+    fail_msg: "Unattend root directory not found: {{ incus_windows_unattend_root }}"
 
 - name: Check custom ISO when provided
   ansible.builtin.stat:
@@ -32,11 +47,27 @@
     fail_msg: "Custom ISO is not readable: {{ incus_windows_alt_iso }}"
   when: incus_windows_alt_iso | default('', true) | length > 0
 
+- name: Check custom virtio ISO when provided
+  ansible.builtin.stat:
+    path: "{{ incus_windows_virtio_iso_override }}"
+  register: incus_windows_virtio_iso_override_stat
+  when: incus_windows_virtio_iso_override | default('', true) | length > 0
+
+- name: Ensure custom virtio ISO is readable
+  ansible.builtin.assert:
+    that:
+      - incus_windows_virtio_iso_override_stat.stat.isreg | default(false)
+      - incus_windows_virtio_iso_override_stat.stat.readable | default(false)
+    fail_msg: "Virtio ISO is not readable: {{ incus_windows_virtio_iso_override }}"
+  when: incus_windows_virtio_iso_override | default('', true) | length > 0
+
 - name: Check custom Autounattend file when provided
   ansible.builtin.stat:
     path: "{{ incus_windows_alt_autounattend }}"
   register: incus_windows_alt_autounattend_stat
   when: incus_windows_alt_autounattend | default('', true) | length > 0
+  delegate_to: localhost
+  become: false
 
 - name: Ensure custom Autounattend file is readable
   ansible.builtin.assert:
@@ -51,6 +82,8 @@
     path: "{{ incus_windows_local_dir }}"
   register: incus_windows_local_dir_stat
   when: incus_windows_local_dir | default('', true) | length > 0
+  delegate_to: localhost
+  become: false
 
 - name: Ensure local customization directory exists
   ansible.builtin.assert:

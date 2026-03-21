@@ -31,21 +31,18 @@
   ansible.builtin.copy:
     src: "{{ incus_windows_oem_dir }}/"
     dest: "{{ incus_windows_repack_tmp.path }}/virtio/OEM/"
-    remote_src: true
     mode: preserve
 
 - name: Copy Autounattend.xml into extracted ISO tree
   ansible.builtin.copy:
     src: "{{ incus_windows_autounattend_path }}"
     dest: "{{ incus_windows_repack_tmp.path }}/virtio/Autounattend.xml"
-    remote_src: true
     mode: preserve
 
 - name: Copy local customization payload into extracted ISO tree
   ansible.builtin.copy:
     src: "{{ incus_windows_local_dir }}/"
     dest: "{{ incus_windows_repack_tmp.path }}/virtio/local/"
-    remote_src: true
     mode: preserve
   when: incus_windows_local_dir | default('', true) | length > 0
 

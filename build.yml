@@ -1,6 +1,5 @@
 - name: Build an Incus Windows image
-  hosts: localhost
-  connection: local
+  hosts: all
   gather_facts: false
   roles:
     - role: incus_windows

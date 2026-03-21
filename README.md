@@ -10,6 +10,8 @@ An Ansible-based Incus Windows image builder.
 - Optionally imports the image into Incus and launches a VM from it.
 - Keeps the build flow declarative where Ansible has native modules, and uses direct commands only for `incus` and `xorriso`.
 
+The role is intended to target the machine where Incus is running. Source assets such as `oem/`, `unattend/`, and optional local customization payloads are read on the Ansible controller. ISO paths, temporary files, output artifacts, and all Incus operations are performed on the remote Incus host.
+
 ## Supported versions
 
 - Windows 11 Enterprise (24H2)
@@ -50,25 +52,19 @@ Install the project dependencies:
 uv sync
 ```
 
-Build a Windows image:
+Run the playbook against the Incus host. The repository checkout only needs to exist on the Ansible controller; the role copies `oem/`, `unattend/`, and optional local payloads to the remote host as part of the build.
+
+Build and import a Windows image:
 
 ```sh
-uv run ansible-playbook build.yml -e incus_windows_target=2022
+uv run ansible-playbook -i incus-host, build.yml -e incus_windows_target=2022
 ```
 
-This creates the build artifacts in `./output/win2022/`:
+This creates the build artifacts on the remote Incus host under `incus_windows_output_root`:
 
 - `disk.qcow2`
 - `incus.tar.xz`
 - `unattended-2022.iso`
-
-Import the image into Incus during the same run:
-
-```sh
-uv run ansible-playbook build.yml \
-  -e incus_windows_target=2022 \
-  -e incus_windows_import_image=true
-```
 
 ## Customizations
 
@@ -83,19 +79,48 @@ uv run ansible-playbook build.yml \
   -e incus_windows_local_dir="$PWD/local"
 ```
 
-Use a custom installer ISO or `Autounattend.xml`:
+Use a custom Windows installer ISO or `Autounattend.xml`:
 
 ```sh
 uv run ansible-playbook build.yml \
   -e incus_windows_target=10e \
-  -e incus_windows_alt_iso="$PWD/my.iso" \
+  -e incus_windows_alt_iso=/srv/isos/my.iso \
   -e incus_windows_alt_autounattend="$PWD/Autounattend.xml"
 ```
+
+Use a preexisting virtio ISO on the Incus host instead of downloading it:
+
+```sh
+uv run ansible-playbook build.yml \
+  -e incus_windows_target=2022 \
+  -e incus_windows_virtio_iso_override=/srv/isos/virtio-win.iso
+```
+
+These paths are resolved on the remote Incus host:
+
+- `incus_windows_workspace_dir` defaults to `/opt/incus-windows`
+- `incus_windows_workspace_dir`
+- `incus_windows_iso_dir`
+- `incus_windows_output_root`
+- `incus_windows_tmp_root`
+- `incus_windows_alt_iso`
+- `incus_windows_virtio_iso_override`
+
+These paths are resolved on the Ansible controller:
+
+- `incus_windows_controller_dir`
+- `incus_windows_oem_dir`
+- `incus_windows_unattend_root`
+- `incus_windows_alt_autounattend`
+- `incus_windows_local_dir`
 
 Useful variables:
 
 - `incus_windows_target`
+- `incus_windows_controller_dir`
+- `incus_windows_workspace_dir`
 - `incus_windows_alt_iso`
+- `incus_windows_virtio_iso_override`
 - `incus_windows_alt_autounattend`
 - `incus_windows_local_dir`
 - `incus_windows_import_image`
@@ -107,9 +132,9 @@ Useful variables:
 
 Make sure the project filesystem has enough space.
 
-- `./isos/` caches the downloaded Windows and virtio ISOs.
-- `./tmp/` is used while repacking and exporting images.
-- `./output/` contains the final qcow2 disk, metadata archive, and unattended ISO.
+- `incus_windows_iso_dir` on the remote Incus host caches the downloaded Windows and virtio ISOs.
+- `incus_windows_tmp_root` on the remote Incus host is used while repacking and exporting images.
+- `incus_windows_output_root` on the remote Incus host contains the final qcow2 disk, metadata archive, and unattended ISO.
 
 ## Windows Server 2008 R2 SP1
 
