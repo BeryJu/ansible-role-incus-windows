@@ -31,9 +31,12 @@ cmd /c "%systemroot%\System32\reg.exe ADD HKLM\SYSTEM\CurrentControlSet\Control\
 cmd /c "%systemroot%\System32\reg.exe ADD HKLM\SYSTEM\CurrentControlSet\Control\Power\ /v HibernateEnabled /t REG_DWORD /d 0 /f"
 
 Log "Drivers - Installing qemu Agent"
-Start-Process msiexec.exe -Wait -ArgumentList ("/I ${setupdrive}\guest-agent\qemu-ga-x86_64.msi /quiet")
+Start-Process msiexec.exe -Wait -ArgumentList ("/I ${setupdrive}\guest-agent\qemu-ga-x86_64.msi /quiet /norestart")
 Log "Drivers - Installing qemu Guest Additions"
-Start-Process msiexec.exe -Wait -ArgumentList ("/I ${setupdrive}\virtio-win-gt-x64.msi /quiet")
+Start-Process msiexec.exe -Wait -ArgumentList ("/I ${setupdrive}\virtio-win-gt-x64.msi /quiet /norestart")
+Log "Drivers - Manually installing viosock driver"
+pnputil /add-driver "${setupdrive}:\viosock\*.inf" /install /subdirs
+
 start-sleep 30
 
 Log "Install incus-agent"
