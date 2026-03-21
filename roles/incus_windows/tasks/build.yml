@@ -27,17 +27,17 @@
           - root,size={{ incus_windows_root_size }}
       changed_when: true
 
-    - name: Use NVMe for the build root disk
-      ansible.builtin.command:
-        argv:
-          - incus
-          - config
-          - device
-          - set
-          - "{{ incus_windows_build_name }}"
-          - root
-          - io.bus=nvme
-      changed_when: true
+    # - name: Use NVMe for the build root disk
+    #   ansible.builtin.command:
+    #     argv:
+    #       - incus
+    #       - config
+    #       - device
+    #       - set
+    #       - "{{ incus_windows_build_name }}"
+    #       - root
+    #       - io.bus=nvme
+    #   changed_when: true
 
     - name: Attach Windows ISO
       ansible.builtin.command:
