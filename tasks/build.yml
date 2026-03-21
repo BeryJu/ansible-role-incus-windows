@@ -247,6 +247,7 @@
       ansible.builtin.file:
         path: "{{ incus_windows_repack_tmp.path }}"
         state: absent
+      diff: false
 
     - name: Remove temporary build image alias
       ansible.builtin.command:
