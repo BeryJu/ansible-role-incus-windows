@@ -79,7 +79,3 @@
 - name: Optionally import the image into Incus
   ansible.builtin.include_tasks: import.yml
   when: incus_windows_import_image | bool
-
-- name: Optionally launch a VM from the imported image
-  ansible.builtin.include_tasks: launch.yml
-  when: incus_windows_launch_image | bool

@@ -70,16 +70,6 @@ uv run ansible-playbook build.yml \
   -e incus_windows_import_image=true
 ```
 
-Import and immediately launch a VM:
-
-```sh
-uv run ansible-playbook build.yml \
-  -e incus_windows_target=2022 \
-  -e incus_windows_import_image=true \
-  -e incus_windows_launch_image=true \
-  -e incus_windows_instance_name=w22
-```
-
 ## Customizations
 
 Add a local payload directory that should appear as `X:\local\` during setup:
@@ -110,8 +100,6 @@ Useful variables:
 - `incus_windows_local_dir`
 - `incus_windows_import_image`
 - `incus_windows_import_alias`
-- `incus_windows_launch_image`
-- `incus_windows_instance_name`
 - `incus_windows_iso_dir`
 - `incus_windows_output_dir`
 
