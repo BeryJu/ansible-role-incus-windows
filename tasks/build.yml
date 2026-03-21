@@ -151,7 +151,7 @@
         echo "VM {{ incus_windows_build_name }} did not remain STOPPED for {{ incus_windows_stopped_grace_seconds | int }} consecutive seconds within {{ incus_windows_build_timeout_seconds | int }} seconds" >&2
         exit 1
       args:
-        executable: /bin/sh
+        executable: /bin/bash
       changed_when: false
 
     - name: Publish the stopped VM directly into Incus
