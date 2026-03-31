@@ -210,16 +210,27 @@
           - requirements.cdrom_agent=true
       changed_when: true
 
-    - name: Set the published image description property
+    - name: Set the published image meta properties
       ansible.builtin.command:
         argv:
           - incus
           - image
           - set-property
           - "{{ incus_windows_import_alias }}"
-          - description
-          - "{{ incus_windows_target_config.description }}"
+          - "{{ item.key }}"
+          - "{{ item.value }}"
       changed_when: true
+      loop:
+        - key: architecture
+          value: x86_64
+        - key: description
+          value: "{{ incus_windows_target_config.description }}"
+        - key: os
+          value: windows
+        - key: variant
+          value: default
+        - key: release
+          value: "{{ incus_windows_target_config.release }}"
   always:
     - name: Remove temporary ISO repack directory
       ansible.builtin.file:
