@@ -33,6 +33,13 @@
     dest: "{{ incus_windows_repack_tmp.path }}/virtio/OEM/"
     mode: preserve
 
+- name: Copy Cloudbase-Init installer into extracted ISO tree
+  ansible.builtin.copy:
+    src: "{{ incus_windows_cloudbase_init_path }}"
+    dest: "{{ incus_windows_repack_tmp.path }}/virtio/OEM/{{ incus_windows_cloudbase_init_filename }}"
+    remote_src: true
+    mode: preserve
+
 - name: Copy Autounattend.xml into extracted ISO tree
   ansible.builtin.copy:
     src: "{{ incus_windows_autounattend_path }}"

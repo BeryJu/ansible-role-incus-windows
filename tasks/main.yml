@@ -33,6 +33,8 @@
         if incus_windows_virtio_iso_override | default('', true)
         else incus_windows_iso_dir ~ '/virtio-win-' ~ incus_windows_virtio_version ~ '.iso'
       }}
+    incus_windows_cloudbase_init_filename: "{{ incus_windows_cloudbase_init_url | basename }}"
+    incus_windows_cloudbase_init_path: "{{ incus_windows_iso_dir }}/{{ incus_windows_cloudbase_init_url | basename }}"
     incus_windows_unattended_iso_path: "{{ incus_windows_output_dir }}/unattended-{{ incus_windows_target }}.iso"
 
 - name: Ensure output root exists

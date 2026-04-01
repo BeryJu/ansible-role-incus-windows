@@ -13,6 +13,7 @@ incus_windows_alt_autounattend: ""
 incus_windows_local_dir: ""
 incus_windows_oem_dir: "{{ role_path }}/files/oem"
 incus_windows_unattend_root: "{{ role_path }}/files/unattend"
+incus_windows_cloudbase_init_url: https://www.cloudbase.it/downloads/CloudbaseInitSetup_Stable_x64.msi
 
 incus_windows_build_cpus: 4
 incus_windows_build_memory: 8GB

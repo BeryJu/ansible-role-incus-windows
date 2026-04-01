@@ -5,6 +5,7 @@ An Ansible-based Incus Windows image builder.
 ## Features
 
 - Downloads and verifies Windows and virtio ISOs.
+- Downloads and installs the stable Cloudbase-Init installer.
 - Rebuilds the unattended ISO with `Autounattend.xml`, `oem/`, and optional local payloads.
 - Builds a Windows VM image directly in Incus.
 - Publishes the finished image directly into Incus.
