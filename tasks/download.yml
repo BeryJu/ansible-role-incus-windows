@@ -14,6 +14,12 @@
     mode: "0644"
   when: incus_windows_alt_iso | default('', true) | length == 0
 
+- name: Download Cloudbase-Init installer
+  ansible.builtin.get_url:
+    url: "{{ incus_windows_cloudbase_init_url }}"
+    dest: "{{ incus_windows_cloudbase_init_path }}"
+    mode: "0644"
+
 - name: Check resolved Autounattend file
   ansible.builtin.stat:
     path: "{{ incus_windows_autounattend_path }}"

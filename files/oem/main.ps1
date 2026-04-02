@@ -37,6 +37,10 @@ Start-Process msiexec.exe -Wait -ArgumentList ("/I ${setupdrive}\virtio-win-gt-x
 Log "Drivers - Manually installing viosock driver"
 pnputil /add-driver "${setupdrive}\viosock\*.inf" /install /subdirs
 
+$cloudbaseInstaller = "${setupdrive}\OEM\CloudbaseInitSetup_Stable_x64.msi"
+Log "Cloudbase-Init - Installing Cloudbase-Init"
+Start-Process msiexec.exe -Wait -ArgumentList ("/i `"$cloudbaseInstaller`" /qn /norestart /l*v `"$env:WINDIR\Temp\CloudbaseInitSetup.log`"")
+
 start-sleep 30
 
 Log "Install incus-agent"
