@@ -92,6 +92,10 @@ fi
 if [ X11e = X"${VERSION}" ]; then
 	incus config device add "${name}" tpm tpm
 	incus config device set "${name}" root size=60GiB
+	# Win11 Setup gates install on Secure Boot enabled (and the 11e
+	# autounattend has no LabConfig bypass). Enable it on the build VM
+	# only -- the resulting image clones fine with secureboot=false later.
+	incus config set "${name}" security.secureboot=true
 fi
 
 python3 "${PROGBASE}/click.py" "${name}"

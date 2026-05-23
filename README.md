@@ -128,6 +128,17 @@ Make sure the project's partition has enough storage space.
 - The `./output/` directory will contain the VM's disk image, metadata
   tarball and unattended install ISO.
 
+### Windows 11
+
+Windows 11 Setup requires Secure Boot and a TPM, so the 11e build VM
+is created with `security.secureboot=true` and a `tpm` device. This
+means the host's Incus firmware must support Secure Boot (EDK2/OVMF
+with the Microsoft UEFI certificates enrolled). This is the case for
+the Zabbly packages and the stock Debian/Ubuntu/Fedora EDK2 packages;
+on hosts without such firmware, the 11e build VM will fail to start.
+The resulting image is not affected and can still be launched with
+`security.secureboot=false` like the other versions.
+
 ### Windows Server 2008 R2 SP1
 
 Windows Server 2008 R2 SP1 is EOL since 2020. However, it still used by
