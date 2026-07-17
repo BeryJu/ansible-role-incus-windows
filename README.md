@@ -130,14 +130,23 @@ Make sure the project's partition has enough storage space.
 
 ### Windows 11
 
-Windows 11 Setup requires Secure Boot and a TPM, so the 11e build VM
+Windows 11 Setup requires Secure Boot and a TPM, so the `11e` build VM
 is created with `security.secureboot=true` and a `tpm` device. This
-means the host's Incus firmware must support Secure Boot (EDK2/OVMF
-with the Microsoft UEFI certificates enrolled). This is the case for
-the Zabbly packages and the stock Debian/Ubuntu/Fedora EDK2 packages;
-on hosts without such firmware, the 11e build VM will fail to start.
+means the host's Incus firmware **must** support Secure Boot (EDK2/OVMF
+with the Microsoft UEFI certificates enrolled); this is the case for
+the Zabbly packages and the stock Debian/Ubuntu/Fedora EDK2 packages.
+On hosts without such firmware, the `11e` build VM will fail to start.
 The resulting image is not affected and can still be launched with
 `security.secureboot=false` like the other versions.
+
+If your firmware does not have the Microsoft's certificates enrolled,
+consider performing the build inside an Incus container with KVM
+passthrough and a nested Incus install from [Zabbly](https://github.com/zabbly/incus).
+
+An other option are the various "bypasses" publicly-documented to
+disable the checks performed by the installer. These checks could be
+disabled manually after attaching to the VM's VGA console, or
+automatically by modifying the unattended configuration file.
 
 ### Windows Server 2008 R2 SP1
 
