@@ -37,7 +37,7 @@ done
 
 [ X-- != X"${1:-}" ] || shift
 
-targets=$(cut -d' ' -f1 "${PROGBASE}/urls.txt" | paste -sd' ')
+targets=$(cut -d' ' -f1 "${PROGBASE}/urls.txt" | paste -s -d ' ' -)
 if [ 1 -ne $# ] && [ 2 -ne $# ]; then
 	usage >&2
 	printf 'available targets: %s\n' "${targets}"
@@ -93,13 +93,22 @@ fi
 ISODIR="${ISODIR:-./isos}"
 OUTDIR="${OUTDIR:-./output/win${VERSION}}"
 
+# portable sha-256: GNU coreutils (sha256sum) on Linux, perl shasum on macOS
+_sha256() {
+	if command -v sha256sum >/dev/null 2>&1; then
+		sha256sum "${1}" | cut -d' ' -f1
+	else
+		shasum -a 256 "${1}" | cut -d' ' -f1
+	fi
+}
+
 # dliso url fname sha256
 dliso() {
 	[ -d "${ISODIR}" ] || mkdir "${ISODIR}"
 
 	[ -f "${ISODIR}/${2}" ] || curl -fSLo "${ISODIR}/${2}" "${1}"
 
-	if [ X"${3}" != X$(sha256sum "${ISODIR}/${2}" | cut -d' ' -f1) ]; then
+	if [ X"${3}" != X$(_sha256 "${ISODIR}/${2}") ]; then
 		die 'error: hash mismatch for %s\n' "${ISODIR}/${2}"
 	fi
 }
@@ -133,6 +142,8 @@ printf '[+] Building image\n'
 mkdir -p "${OUTDIR}"
 
 shift
+# ${@:+"${@}"} rather than "${@}" so an empty arg list does not trip the
+# nounset (set -u) bug in bash 3.2, which is what macOS ships as /bin/sh.
 sh "${PROGBASE}/tools/pack.sh" \
 	"${VERSION}" \
 	"${isopath}" \
@@ -140,7 +151,7 @@ sh "${PROGBASE}/tools/pack.sh" \
 	"${PROGBASE}/oem/" \
 	"${OUTDIR}" \
 	"${xmlpath}" \
-	"${@}"
+	${@:+"${@}"}
 
 
 printf '[+] Generating metadata\n'

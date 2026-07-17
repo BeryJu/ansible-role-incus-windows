@@ -57,7 +57,8 @@ print("[+] You may connect to the VM's VGA using the following command")
 print('incus console --type=vga {}'.format(VM))
 n = 0
 while n < 10:
-    o = subprocess.check_output(['incus', 'ls', '-fcsv', '-cns', VM], env={'LANG': 'C'})
+    o = subprocess.check_output(['incus', 'ls', '-fcsv', '-cns', VM],
+                                env={**os.environ, 'LANG': 'C'})
     for ln in o.split(b'\n'):
         if not ln.startswith(f'{VM},'.encode()):
             continue
