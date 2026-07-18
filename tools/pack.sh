@@ -59,8 +59,11 @@ cp "${XMLPATH}" "${TMPDIR}/virtio-win-${VERSION}/"
 # strip viosock driver path from staged unattend if absent in the virtio iso
 if [ ! -d "${TMPDIR}/virtio-win-${VERSION}/viosock" ]; then
 	printf '[+] viosock not present in virtio iso, stripping from unattend\n'
-	sed -i '/<!-- VIOSOCK_BEGIN -->/,/<!-- VIOSOCK_END -->/d' \
-		"${TMPDIR}/virtio-win-${VERSION}/$(basename "${XMLPATH}")"
+	# read/transform/write-back instead of sed -i, whose -i semantics
+	# differ between GNU and BSD sed
+	_xml="${TMPDIR}/virtio-win-${VERSION}/$(basename "${XMLPATH}")"
+	sed '/<!-- VIOSOCK_BEGIN -->/,/<!-- VIOSOCK_END -->/d' "${_xml}" >"${_xml}.new"
+	mv "${_xml}.new" "${_xml}"
 fi
 
 rm -f "${DESTDIR}/unattended-${VERSION}.iso"
@@ -107,7 +110,9 @@ printf '[+] Exporting the image\n'
 incus image export "${name}" "${DESTDIR}"
 
 printf '[+] Extracting disk.qcow2\n'
-cat "${DESTDIR}"/*.tar | tar -C "${DESTDIR}" -f- -x --transform s/rootfs.img/disk.qcow2/ rootfs.img
+# extract then rename instead of tar --transform, which is GNU-only
+cat "${DESTDIR}"/*.tar | tar -C "${DESTDIR}" -xf- rootfs.img
+mv "${DESTDIR}/rootfs.img" "${DESTDIR}/disk.qcow2"
 # incus's disk.qcow2 file is not readable (mode=0)
 chmod 0644 "${DESTDIR}/disk.qcow2"
 rm -f "${DESTDIR}"/*.tar
