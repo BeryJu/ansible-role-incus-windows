@@ -128,6 +128,14 @@ Make sure the project filesystem has enough space.
 - `incus_windows_tmp_root` on the remote Incus host is used while repacking and building images.
 - `incus_windows_output_root` on the remote Incus host contains the unattended ISO for the selected target.
 
+## Windows 11
+
+Windows 11 Setup requires Secure Boot and a TPM, so the `11e` build VM is created with `security.secureboot=true` and a `tpm` device (`requires_secureboot` and `requires_tpm` on the target in `vars/main.yml`). This means the remote Incus host's firmware **must** support Secure Boot: EDK2/OVMF with the Microsoft UEFI certificates enrolled, which is the case for the Zabbly packages and the stock Debian/Ubuntu/Fedora EDK2 packages. On hosts without such firmware, the `11e` build VM fails to start. The published image is not affected and can still be launched with `security.secureboot=false` like the other versions.
+
+If your firmware does not have Microsoft's certificates enrolled, consider building inside an Incus container with KVM passthrough and a nested Incus install from [Zabbly](https://github.com/zabbly/incus).
+
+Another option is one of the publicly-documented "bypasses" that disable the installer's checks. These can be disabled manually after attaching to the VM's VGA console, or automatically by pointing `incus_windows_alt_autounattend` at a modified unattended configuration file.
+
 ## Windows Server 2008 R2 SP1
 
 Windows Server 2008 R2 SP1 is EOL since 2020. Compared to the newer images, automatic configuration remains limited. To get a comparable result:

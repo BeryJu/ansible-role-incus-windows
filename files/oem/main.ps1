@@ -34,8 +34,10 @@ Log "Drivers - Installing qemu Agent"
 Start-Process msiexec.exe -Wait -ArgumentList ("/I ${setupdrive}\guest-agent\qemu-ga-x86_64.msi /quiet /norestart")
 Log "Drivers - Installing qemu Guest Additions"
 Start-Process msiexec.exe -Wait -ArgumentList ("/I ${setupdrive}\virtio-win-gt-x64.msi /quiet /norestart")
-Log "Drivers - Manually installing viosock driver"
-pnputil /add-driver "${setupdrive}\viosock\*.inf" /install /subdirs
+if (Test-Path "${setupdrive}\viosock") {
+    Log "Drivers - Manually installing viosock driver"
+    pnputil /add-driver "${setupdrive}\viosock\*.inf" /install /subdirs
+}
 
 $cloudbaseInstaller = "${setupdrive}\OEM\CloudbaseInitSetup_Stable_x64.msi"
 Log "Cloudbase-Init - Installing Cloudbase-Init"
@@ -70,6 +72,10 @@ $setupComplete = "$env:WINDIR\Setup\Scripts\SetupComplete.cmd"
 # SetupComplete.cmd is a batch file, so %WINDIR% must be written literally.
 Add-Content -Path $setupComplete -Value 'netsh advfirewall firewall set rule name="Allow WinRM HTTPS" new action=allow >> %WINDIR%\Temp\SetupComplete.log'
 Add-Content -Path $setupComplete -Value 'netsh advfirewall firewall set rule name="Windows Remote Management (HTTP-In)" new action=allow >> %WINDIR%\Temp\SetupComplete.log'
+
+Log "Remove per-user Edge so it cannot fail sysprep /generalize"
+# OOBE reprovisions Edge on first boot.
+Get-AppxPackage -Name Microsoft.MicrosoftEdge.Stable | Remove-AppxPackage -ErrorAction SilentlyContinue
 
 Log "Running sysprep"
 & "$env:WINDIR\System32\Sysprep\sysprep.exe" /generalize /oobe /shutdown /unattend:"${setupdrive}\OEM\unattend.xml"

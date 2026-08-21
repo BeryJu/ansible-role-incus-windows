@@ -1,4 +1,10 @@
 incus_windows_virtio_archive: https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/
+# 0.1.285-1 is the first pack carrying the viosock driver, which the Incus
+# agent needs from Incus 6.22 onwards. Note that 0.1.262-1 and later break
+# Windows Server 2012; building that target needs an override back to
+# 0.1.248-1 (sha256
+# d5b5739cf297f0538d263e30678d5a09bba470a7c6bcbd8dff74e44153f16549), for
+# which repack.yml strips the viosock driver paths from the unattend file.
 incus_windows_virtio_version: 0.1.285-1
 incus_windows_virtio_sha256: e14cf2b94492c3e925f0070ba7fdfedeb2048c91eea9c5a5afb30232a3976331
 
@@ -25,6 +31,7 @@ incus_windows_targets:
     release: "11e"
     root_size: 60GiB
     requires_tpm: true
+    requires_secureboot: true
   "2008":
     url: https://archive.org/download/en_windows_server_2008_r2_with_sp1_x64_dvd_617601_202006/en_windows_server_2008_r2_with_sp1_x64_dvd_617601.iso
     sha256: dfd9890881b7e832a927c38310fb415b7ea62ac5a896671f2ce2a111998f0df8

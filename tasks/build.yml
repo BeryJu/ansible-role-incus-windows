@@ -66,8 +66,7 @@
           - config
           - set
           - "{{ incus_windows_build_name }}"
-          - raw.apparmor
-          - "-"
+          - raw.apparmor=-
         stdin: |-
           {{ incus_windows_windows_iso_path }} rwk,
           {{ incus_windows_unattended_iso_path }} rwk,
@@ -80,8 +79,7 @@
           - config
           - set
           - "{{ incus_windows_build_name }}"
-          - raw.qemu
-          - "-"
+          - raw.qemu=-
         stdin: >-
           -drive file={{ incus_windows_windows_iso_path }},index=0,media=cdrom,if=ide
           -drive file={{ incus_windows_unattended_iso_path }},index=1,media=cdrom,if=ide
@@ -94,8 +92,7 @@
           - config
           - set
           - "{{ incus_windows_build_name }}"
-          - security.csm
-          - "true"
+          - security.csm=true
       changed_when: true
       when: incus_windows_target_config.security_csm | default(false) | bool
 
@@ -111,6 +108,20 @@
           - tpm
       changed_when: true
       when: incus_windows_target_config.requires_tpm | default(false) | bool
+
+    # Win11 Setup gates the install on Secure Boot being enabled, and the
+    # 11e autounattend carries no LabConfig bypass. The published image is
+    # unaffected and still launches with security.secureboot=false.
+    - name: Enable Secure Boot for Windows 11 builds
+      ansible.builtin.command:
+        argv:
+          - incus
+          - config
+          - set
+          - "{{ incus_windows_build_name }}"
+          - security.secureboot=true
+      changed_when: true
+      when: incus_windows_target_config.requires_secureboot | default(false) | bool
 
     - name: Boot the VM and spam Enter at the firmware boot prompt
       ansible.builtin.script:
