@@ -46,6 +46,20 @@
     dest: "{{ incus_windows_repack_tmp.path }}/virtio/Autounattend.xml"
     mode: preserve
 
+- name: Detect viosock drivers in the extracted virtio ISO
+  ansible.builtin.stat:
+    path: "{{ incus_windows_repack_tmp.path }}/virtio/viosock"
+  register: incus_windows_viosock_stat
+
+# Older virtio packs ship no viosock driver. Setup fails hard on a
+# DriverPath that does not exist, so drop the marked block instead.
+- name: Strip viosock driver paths from staged Autounattend.xml
+  ansible.builtin.replace:
+    path: "{{ incus_windows_repack_tmp.path }}/virtio/Autounattend.xml"
+    regexp: '(?s)\n[ \t]*<!-- VIOSOCK_BEGIN -->.*?<!-- VIOSOCK_END -->'
+    replace: ""
+  when: not (incus_windows_viosock_stat.stat.isdir | default(false))
+
 - name: Copy local customization payload into extracted ISO tree
   ansible.builtin.copy:
     src: "{{ incus_windows_local_dir }}/"
