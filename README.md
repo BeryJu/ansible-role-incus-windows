@@ -9,6 +9,7 @@ An Ansible-based Incus Windows image builder.
 - Rebuilds the unattended ISO with `Autounattend.xml`, `oem/`, and optional local payloads.
 - Builds a Windows VM image directly in Incus.
 - Publishes the finished image directly into Incus.
+- Enables the in-box OpenSSH server and its firewall rule where Windows offers it.
 - Keeps the build flow declarative where Ansible has native modules, and uses direct commands only for `incus` and `xorriso`.
 
 The role is intended to target the machine where Incus is running. Source assets such as `oem/`, `unattend/`, and optional local customization payloads are read on the Ansible controller. ISO paths, temporary files, output artifacts, and all Incus operations are performed on the remote Incus host.
@@ -146,6 +147,27 @@ Windows Server 2008 R2 SP1 is EOL since 2020. Compared to the newer images, auto
 - Run `E:\OEM\power.ps1`.
 - Run `E:\OEM\qemu-ga.ps1`.
 - Run `E:\OEM\sysprep.bat E:\OEM\unattend.xml`.
+
+## SSH access
+
+`oem/ssh.ps1` enables the in-box OpenSSH server on every target that offers it as
+a Windows capability: `10e`, `10e-20h2`, `10e-21h2`, `11e`, `2019`, `2022` and
+`2025`. The capability payload lives inside the OS image, so no network access is
+needed. It sets `sshd` to start automatically and opens inbound TCP 22 in the
+firewall, so published images listen on port 22 from first boot.
+
+Server 2016 and older have no OpenSSH capability, so the script logs a line and
+skips itself on those targets.
+
+Two build-time details are worth knowing:
+
+- The stock `sshd_config` sends every administrator to
+  `administrators_authorized_keys`, which Cloudbase-Init does not write. That
+  `Match Group administrators` block is commented out so keys injected into the
+  user's profile (`%USERPROFILE%\.ssh\authorized_keys`) are honoured. Remove that
+  step from `oem/ssh.ps1` if you would rather keep the stock behaviour.
+- Host keys generated during the build are deleted before sysprep, so each
+  machine launched from the image generates its own.
 
 ## Serial console access
 

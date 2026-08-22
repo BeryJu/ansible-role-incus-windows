@@ -56,6 +56,9 @@ start-sleep 30
 # . "${setupdrive}\OEM\sac.ps1"
 . "${setupdrive}\OEM\ConfigureRemotingForAnsible.ps1"
 
+Log "OpenSSH - Configuring the in-box SSH server"
+. "${setupdrive}\OEM\ssh.ps1"
+
 if (test-path "${setupdrive}\local\main.ps1") {
 	. "${setupdrive}\local\main.ps1"
 }
